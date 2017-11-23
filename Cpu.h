@@ -124,6 +124,43 @@ public:
     // Load Y register
     void LDY(Memory& mem, uint16_t address);
 
+    // Logical shift right
+    void LSR(Memory& mem, uint16_t address);
+
+    // No operation
+    void NOP();
+
+    // Logical inclusive or
+    void ORA(Memory& mem, uint16_t address);
+
+    // Push accumulator
+    void PHA();
+
+    // Push processor status
+    void PHP();
+
+    // Pull accumulator
+    void PLA();
+
+    // Pull processor status
+    void PLP();
+
+    // Rotate left
+    void ROL(Memory& mem, uint16_t address);
+
+    // Rotate right
+    void ROR(Memory& mem, uint16_t address);
+
+    // Return from interrupt
+    void RTI();
+
+    // Return from subroutine
+    void RTS();
+
+    // Subtract with carry
+    void SBC(Memory& mem, uint16_t address);
+
+
 };
 
 #endif

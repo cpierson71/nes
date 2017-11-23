@@ -24,9 +24,9 @@ void Cpu::ADC(Memory& mem, uint16_t address)
     const uint8_t prevA = A;
     A = A + val + C;
     Z = (A == 0) ? 1 : 0;
-    C = (static_cast<int>(A) + static_cast<int>(val) + static_cast<int>(C) > 0xFF) ? 1 : 0;
+    C = (static_cast<int>(prevA) + val + C > 0xFF) ? 1 : 0;
     N = (A & 0x80 != 0) ? 1 : 0;
-    // Overflow if accumulator flipped signs after addition && 
+    // Overflow occurred if accumulator flipped signs after addition && 
     // accumulator and memory value are same sign
     V = ((prevA^A) & 0x80 != 0 && (A^val) & 0x80 == 0) ? 1 : 0;
 }
@@ -211,7 +211,7 @@ void Cpu::DEY()
     N = (Y & 0x80) != 0 ? 1 : 0;
 }
 
-// Exclusive or
+// Logical exclusive or
 void Cpu::EOR(Memory& mem, uint16_t address)
 {
     int8_t val = mem.read(address);
@@ -297,3 +297,134 @@ void Cpu::LDY(Memory& mem, uint16_t address)
     Z = (Y == 0) ? 1 : 0;
     N = (Y & 0x80 != 0) ? 1 : 0;
 }
+
+// Logical shift right
+void Cpu::LSR(Memory& mem, uint16_t address)
+{
+    // TODO
+    // If in accumulator mode, perform on A instead
+
+    // Cast as uint8_t so when the bits are shifted, the top bit becomes 0
+    // For int8_t, the top bit will stay the same
+    const uint8_t val = static_cast<uint8_t>(mem.read(address));
+    C = val & 0x01;
+    val >>= 1;
+    mem.write(address, static_cast<int8_t>(val));
+    Z = (val == 0) ? 1 : 0;
+    N = (val & 0x80 != 0) ? 1 : 0;
+}
+
+// No operation
+void Cpu::NOP()
+{
+    // Intentionally empty
+}
+
+// Logical inclusive or
+void Cpu::ORA(Memory& mem, uint16_t address)
+{
+    const int8_t val = mem.read(address);
+    A = A|val;
+    Z = (A == 0) ? 1 : 0;
+    N = (A & 0x80 != 0) ? 1 : 0;
+}
+
+// Push accumulator
+void Cpu::PHA()
+{
+    // TODO
+    // Push copy of A to stack
+}
+
+// Push processor status
+void Cpu::PHP()
+{
+    // TODO
+    // Push copy of status flag to stack
+}
+
+// Pull accumulator
+void Cpu::PLA()
+{
+    // TODO
+    // Pull value from stack and copy to A
+    // Set Z and N flags accordingly
+}
+
+// Pull processor status
+void Cpu::PLP()
+{
+    // TODO
+    // Push status flags from stack
+    // Set status flags to values pulled
+}
+
+// Rotate left
+void Cpu::ROL(Memory& mem, uint16_t address)
+{
+    // TODO
+    // If in accumulator mode, perform on A instead
+
+    const int8_t val = mem.read(address);
+    const int8_t signBit = val & 0x80;
+    val <<= 1;
+    if (C == 1)
+    {
+        val |= 0x01;
+    }
+    C = signBit;
+    Z = (val == 0) ? 1 : 0;
+    N = (val & 0x80 != 0) ? 1 : 0;
+}
+
+// Rotate right
+void Cpu::ROR(Memory& mem, uint16_t address)
+{
+    // TODO
+    // If in accumulator mode, perform on A instead
+
+    const int8_t val = mem.read(address);
+    const int8_t zeroBit = val & 0x01;
+    val >>= 1;
+    if (C == 1)
+    {
+        val |= 0x80;
+    }
+    C = zeroBit;
+    Z = (val == 0) ? 1 : 0;
+    N = (val & 0x80 != 0) ? 1 : 0;
+}
+
+// Return from interrupt
+void Cpu::RTI()
+{
+    // TODO
+    // Pull processor flags from stack and set
+    // Pull program counter from stack and set
+}
+
+// Return from subroutine
+void Cpu::RTS()
+{
+    // TODO
+    // Pull program counter (minus one) from stack and set 
+}
+
+// Subtract with carry
+void Cpu::SBC(Memory& mem, uint16_t address)
+{
+    const int8_t val = mem.read(address);
+    const int8_t prevA = A;
+    A = A - val - (!C);
+    C = (static_cast<int>(prevA) - val - (!C) < -128) ? 1 : 0;
+    Z = (A == 0) ? 1 : 0;
+    N = (A & 0x80 != 0) ? 1 : 0;
+    // Overflow occurred if accumulator flipped signs after subtraction && 
+    // accumulator and memory value are same sign
+    V = ((prevA^A) & 0x80 != 0 && (A^val) & 0x80 == 0) ? 1 : 0;
+}
+
+
+
+
+

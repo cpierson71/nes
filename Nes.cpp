@@ -9,22 +9,12 @@ int main()
     Memory memory{};
 
 
-    memory.write(50, -5);
-    std::cout << static_cast<int>(memory.read(50)) << std::endl;
+    memory.write(1, -25);
+    std::cout << (int) memory.read(1) << '\n';
+    cpu.LSR(memory, 1);
+    std::cout << (int) memory.read(1) << '\n';
 
-    cpu.ADC(memory, 50);
-    std::cout << cpu.flagString() << std::endl;
-
-    for(int i = 0; i < 65535; ++i)
-    {
-        cpu.INC(memory, i);
-    }
-
-    std::cout << static_cast<int>(memory.read(0x10FE)) << std::endl;
-
-    int8_t*  addr_p = memory.getAddress(10);
-    std::cout << static_cast<int>(*addr_p) << std::endl;
-
+    std::cout << (int)(static_cast<int8_t>(0x80) & (int)0xFF) << std::endl;
 
     return 0;
 }
