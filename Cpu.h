@@ -27,6 +27,28 @@ public:
 
     std::string flagString();
     
+    
+    /////////////////////////////////////
+    // Stack operations
+    /////////////////////////////////////
+
+    // Push 8-bit value to stack
+    void push(Memory& mem, int8_t value);
+
+    // Push 16-bit value to stack
+    void push16(Memory& mem, int16_t value);
+
+    // Pop value from stack   
+    int8_t pop(Memory& mem);
+
+    // Pop 16-bit value from stack
+    int16_t pop16(Memory& mem);
+
+    // Peek at value on stack
+    int8_t peek(Memory& mem);
+
+
+
     /////////////////////////////////////
     // 6502 Instructions:
     /////////////////////////////////////
@@ -113,7 +135,7 @@ public:
     void JMP(uint16_t address);
 
     // Jump to subroutine
-    void JSR(uint16_t address);
+    void JSR(Memory& mem, uint16_t address);
 
     // Load accumulator
     void LDA(Memory& mem, uint16_t address);
@@ -134,16 +156,16 @@ public:
     void ORA(Memory& mem, uint16_t address);
 
     // Push accumulator
-    void PHA();
+    void PHA(Memory& mem);
 
     // Push processor status
-    void PHP();
+    void PHP(Memory& mem);
 
     // Pull accumulator
-    void PLA();
+    void PLA(Memory& mem);
 
     // Pull processor status
-    void PLP();
+    void PLP(Memory& mem);
 
     // Rotate left
     void ROL(Memory& mem, uint16_t address);
@@ -152,14 +174,49 @@ public:
     void ROR(Memory& mem, uint16_t address);
 
     // Return from interrupt
-    void RTI();
+    void RTI(Memory& mem);
 
     // Return from subroutine
-    void RTS();
+    void RTS(Memory& mem);
 
     // Subtract with carry
     void SBC(Memory& mem, uint16_t address);
 
+    // Set carry flag
+    void SEC();
+
+    // Set decimal flag
+    void SED();
+
+    // Set interrupt flag
+    void SEI();
+
+    // Store accumulator
+    void STA(Memory& mem, uint16_t address);
+
+    // Store X register
+    void STX(Memory& mem, uint16_t address);
+
+    // Store Y register
+    void STY(Memory& mem, uint16_t address);
+
+    // Transfer accumulator to X
+    void TAX();
+
+    // Transfer accumulator to Y
+    void TAY();
+
+    // Transfer stack pointer to X
+    void TSX(Memory& mem);
+
+    // Transfer X to accumulator
+    void TXA();
+
+    // Transfer X to stack pointer
+    void TXS(Memory& mem);
+
+    // Trasnfer Y to accumulator
+    void TYA();
 
 };
 

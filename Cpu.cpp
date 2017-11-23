@@ -12,7 +12,70 @@ std::string Cpu::flagString()
 
     return flagString;
 }
-    
+
+/////////////////////////////////////
+// Stack operations
+/////////////////////////////////////
+
+// Push 8-bit value to stack
+void Cpu::push(Memory& mem, int8_t value)
+{
+    // Stack is located in memory locations $0100-$01FF and works top-down
+    uint16_t address = 0x1FF - SP;
+    mem.write(address, value);
+    --SP; // Intentionally not preventing overflow
+}
+
+// Push 16-bit value to stack
+void Cpu::push16(Memory& mem, int16_t value)
+{
+    // Stack is located in memory locations $0100-$01FF and works top-down
+    uint16_t address = 0x1FF - SP;
+    uint8_t* bytes = reinterpret_cast<uint8_t*>(mem.getAddress(address));
+    // TODO -- verify order
+    // Push each byte of the uint16_t value
+    mem.write(address, bytes[0]);
+    --SP; // Intentionally not preventing overflow
+    mem.write(address, bytes[1]);
+    --SP; // Intentionally not preventing overflow
+}
+
+// Pop value from stack 
+int8_t Cpu::pop(Memory& mem)
+{
+    // Stack is located in memory locations $0100-$01FF and works top-down
+    uint16_t address = 0x1FF - SP;
+    int8_t val = mem.read(address);
+    ++SP; // Intentionally not preventing overflow
+    return val;
+}
+
+// Pop 16-bit value from stack
+int16_t Cpu::pop16(Memory& mem)
+{
+    // Stack is located in memory locations $0100-$01FF and works top-down
+    uint16_t address = 0x1FF - SP;
+    int8_t bytes[2];
+    // TODO -- verify order
+    // Pop each byte of the uint16_t value
+    bytes[0] = mem.read(address);
+    ++SP; // Intentionally not preventing overflow
+    bytes[1] = mem.read(address);
+    ++SP; // Intentionally not preventing overflow
+    uint16_t* value_p = reinterpret_cast<uint16_t*>(bytes);
+    return *value_p;
+}
+
+// Peek at value on stack
+int8_t Cpu::peek(Memory& mem)
+{
+    // Stack is located in memory locations $0100-$01FF and works top-down
+    uint16_t address = 0x1FF - SP;
+    int8_t val = mem.read(address);
+    // Don't increment SP
+    return val;
+}
+
 /////////////////////////////////////
 // 6502 Instructions:
 /////////////////////////////////////
@@ -106,11 +169,8 @@ void Cpu::BPL(uint16_t address)
 // Break
 void Cpu::BRK(Memory& mem)
 {
-    // TODO
-
-    // push PC to stack;
-    // PHP();
-
+    push16(mem, PC);
+    PHP(mem);
     uint16_t* irqVec_p = reinterpret_cast<uint16_t*>(mem.getAddress(0xFFFE));
     PC = *irqVec_p;
     B = 1;
@@ -265,13 +325,10 @@ void Cpu::JMP(uint16_t address)
 }
 
 // Jump to subroutine
-void Cpu::JSR(uint16_t address)
+void Cpu::JSR(Memory& mem, uint16_t address)
 {
-    // TODO
-    
-    // push PC - 1 to stack
+    push16(mem, PC - 1);
     PC = address;
-
 }
 
 // Load accumulator
@@ -306,7 +363,7 @@ void Cpu::LSR(Memory& mem, uint16_t address)
 
     // Cast as uint8_t so when the bits are shifted, the top bit becomes 0
     // For int8_t, the top bit will stay the same
-    const uint8_t val = static_cast<uint8_t>(mem.read(address));
+    uint8_t val = static_cast<uint8_t>(mem.read(address));
     C = val & 0x01;
     val >>= 1;
     mem.write(address, static_cast<int8_t>(val));
@@ -330,33 +387,54 @@ void Cpu::ORA(Memory& mem, uint16_t address)
 }
 
 // Push accumulator
-void Cpu::PHA()
+void Cpu::PHA(Memory& mem)
 {
-    // TODO
-    // Push copy of A to stack
+    push(mem, A);
 }
 
 // Push processor status
-void Cpu::PHP()
+void Cpu::PHP(Memory& mem)
 {
-    // TODO
-    // Push copy of status flag to stack
+    // Reformat status flags into a single byte arranged as follows:
+    // Bits:  | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+    // Flags: | N | V |   | B | D | I | Z | C |
+    uint8_t byteFlag = 0;
+    if (C) {byteFlag += 1;}
+    if (Z) {byteFlag += 2;}
+    if (I) {byteFlag += 4;}
+    if (D) {byteFlag += 8;}
+    if (B) {byteFlag += 16;}
+    if (V) {byteFlag += 64;}
+    if (N) {byteFlag += 128;}
+
+    int8_t* byteFlag_p = reinterpret_cast<int8_t*>(&byteFlag);
+    push(mem, *byteFlag_p);
 }
 
 // Pull accumulator
-void Cpu::PLA()
+void Cpu::PLA(Memory& mem)
 {
-    // TODO
-    // Pull value from stack and copy to A
-    // Set Z and N flags accordingly
+    A = pop(mem);
+    Z = (A == 0) ? 1 : 0;
+    N = (A & 0x80 != 0) ? 1 : 0;
 }
 
 // Pull processor status
-void Cpu::PLP()
+void Cpu::PLP(Memory& mem)
 {
-    // TODO
-    // Push status flags from stack
+    // Reformat status flags from a single byte arranged as follows:
+    // Bits:  | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+    // Flags: | N | V |   | B | D | I | Z | C |
+    int8_t byteFlags = pop(mem);
+
     // Set status flags to values pulled
+    N = byteFlags & 0x80;
+    V = byteFlags & 0x40;
+    B = byteFlags & 0x10;
+    D = byteFlags & 0x08;
+    I = byteFlags & 0x04;
+    Z = byteFlags & 0x02;
+    C = byteFlags & 0x01;
 }
 
 // Rotate left
@@ -365,7 +443,7 @@ void Cpu::ROL(Memory& mem, uint16_t address)
     // TODO
     // If in accumulator mode, perform on A instead
 
-    const int8_t val = mem.read(address);
+    int8_t val = mem.read(address);
     const int8_t signBit = val & 0x80;
     val <<= 1;
     if (C == 1)
@@ -383,7 +461,7 @@ void Cpu::ROR(Memory& mem, uint16_t address)
     // TODO
     // If in accumulator mode, perform on A instead
 
-    const int8_t val = mem.read(address);
+    int8_t val = mem.read(address);
     const int8_t zeroBit = val & 0x01;
     val >>= 1;
     if (C == 1)
@@ -396,18 +474,16 @@ void Cpu::ROR(Memory& mem, uint16_t address)
 }
 
 // Return from interrupt
-void Cpu::RTI()
+void Cpu::RTI(Memory& mem)
 {
-    // TODO
-    // Pull processor flags from stack and set
-    // Pull program counter from stack and set
+    PLP(mem);
+    PC = pop16(mem);
 }
 
 // Return from subroutine
-void Cpu::RTS()
+void Cpu::RTS(Memory& mem)
 {
-    // TODO
-    // Pull program counter (minus one) from stack and set 
+    PC = pop(mem); 
 }
 
 // Subtract with carry
@@ -422,6 +498,88 @@ void Cpu::SBC(Memory& mem, uint16_t address)
     // Overflow occurred if accumulator flipped signs after subtraction && 
     // accumulator and memory value are same sign
     V = ((prevA^A) & 0x80 != 0 && (A^val) & 0x80 == 0) ? 1 : 0;
+}
+
+// Set carry flag
+void Cpu::SEC()
+{
+    C = 1;
+}
+
+// Set decimal flag
+void Cpu::SED()
+{
+    D = 1;
+}
+
+// Set interrupt flag
+void Cpu::SEI()
+{
+    I = 1;
+}
+
+// Store accumulator
+void Cpu::STA(Memory& mem, uint16_t address)
+{
+    mem.write(address, A);
+}
+
+// Store X register
+void Cpu::STX(Memory& mem, uint16_t address)
+{
+    mem.write(address, X);
+}
+
+// Store Y register
+void Cpu::STY(Memory& mem, uint16_t address)
+{
+    mem.write(address, Y);
+}
+
+// Transfer accumulator to X
+void Cpu::TAX()
+{
+    X = A;
+    Z = (X == 0) ? 1 : 0;
+    N = (X & 0x80 != 0) ? 1 : 0;
+}
+
+// Transfer accumulator to Y
+void Cpu::TAY()
+{
+    Y = A;
+    Z = (Y == 0) ? 1 : 0;
+    N = (Y & 0x80 != 0) ? 1 : 0;
+}
+
+// Transfer stack pointer to X
+void Cpu::TSX(Memory& mem)
+{
+    X = peek(mem);
+    Z = (X == 0) ? 1 : 0;
+    N = (X & 0x80 != 0) ? 1 : 0;
+}
+
+// Transfer X to accumulator
+void Cpu::TXA()
+{
+    A = X;
+    Z = (A == 0) ? 1 : 0;
+    N = (A & 0x80 != 0) ? 1 : 0;
+}
+
+// Transfer X to stack pointer
+void Cpu::TXS(Memory& mem)
+{
+    push(mem, X);
+}
+
+// Transfer Y to accumulator
+void Cpu::TYA()
+{
+    A = Y;
+    Z = (A == 0) ? 1 : 0;
+    N = (A & 0x80 != 0) ? 1 : 0;
 }
 
 

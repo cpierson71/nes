@@ -5,7 +5,7 @@
 class Memory {
 
 public:
-    Memory() : RAM{}
+    Memory() : data{}
     {}
        
     int8_t read(uint16_t address);
@@ -15,7 +15,7 @@ public:
     int8_t* getAddress(uint16_t address);
 
 private:
-    int8_t RAM[65535]; // 16-bit address
+    int8_t data[65535]; // 16-bit address
 
 };
 
