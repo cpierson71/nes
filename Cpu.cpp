@@ -14,6 +14,28 @@ std::string Cpu::flagString()
 }
 
 /////////////////////////////////////
+// PPU control operations
+/////////////////////////////////////
+
+// Enable 8x8 or 8x16 sprites
+void Cpu::enableSpriteMode(Memory& mem, Ppu::SpriteType spriteType)
+{
+    // Setting bit 5 of $2000 enables 8x16 sprites
+    const uint8_t bitNum = 5;
+    // 8x8 == 0, 8x16 == 1
+    mem.setBit(Ppu::ppuControlRegister1, bitNum, spriteType);
+}
+
+// Disable non-maskable interrupt (NMI) on V-Blank
+void Cpu::disableNMI(Memory& mem)
+{
+    // Setting bit 7 of $2000 disables NMI
+    const uint8_t bitNum = 7;
+    mem.setBit(Ppu::ppuControlRegister1, bitNum, 0);
+
+}
+
+/////////////////////////////////////
 // Stack operations
 /////////////////////////////////////
 

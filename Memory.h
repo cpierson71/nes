@@ -14,6 +14,8 @@ public:
 
     int8_t* getAddress(uint16_t address);
 
+    void setBit(uint16_t address, uint8_t bitNum, bool set);
+
 private:
     int8_t data[65535]; // 16-bit address
 
