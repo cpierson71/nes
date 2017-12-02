@@ -1,6 +1,6 @@
 #include "Cpu.h"
 
-std::string Cpu::flagString()
+std::string NesCpu::Cpu::flagString()
 {
     std::string flagString = "C: " + std::to_string(C)
         + " Z: " + std::to_string(Z)
@@ -13,12 +13,14 @@ std::string Cpu::flagString()
     return flagString;
 }
 
+
+
 /////////////////////////////////////
 // PPU control operations
 /////////////////////////////////////
 
 // Enable 8x8 or 8x16 sprites
-void Cpu::enableSpriteMode(Memory& mem, Ppu::SpriteType spriteType)
+void NesCpu::Cpu::enableSpriteMode(Memory& mem, Ppu::SpriteType spriteType)
 {
     // Setting bit 5 of $2000 enables 8x16 sprites
     const uint8_t bitNum = 5;
@@ -27,7 +29,7 @@ void Cpu::enableSpriteMode(Memory& mem, Ppu::SpriteType spriteType)
 }
 
 // Disable non-maskable interrupt (NMI) on V-Blank
-void Cpu::disableNMI(Memory& mem)
+void NesCpu::Cpu::disableNMI(Memory& mem)
 {
     // Setting bit 7 of $2000 disables NMI
     const uint8_t bitNum = 7;
@@ -40,7 +42,7 @@ void Cpu::disableNMI(Memory& mem)
 /////////////////////////////////////
 
 // Push 8-bit value to stack
-void Cpu::push(Memory& mem, int8_t value)
+void NesCpu::Cpu::push(Memory& mem, int8_t value)
 {
     // Stack is located in memory locations $0100-$01FF and works top-down
     uint16_t address = 0x1FF - SP;
@@ -49,7 +51,7 @@ void Cpu::push(Memory& mem, int8_t value)
 }
 
 // Push 16-bit value to stack
-void Cpu::push16(Memory& mem, int16_t value)
+void NesCpu::Cpu::push16(Memory& mem, int16_t value)
 {
     // Stack is located in memory locations $0100-$01FF and works top-down
     uint16_t address = 0x1FF - SP;
@@ -63,7 +65,7 @@ void Cpu::push16(Memory& mem, int16_t value)
 }
 
 // Pop value from stack 
-int8_t Cpu::pop(Memory& mem)
+int8_t NesCpu::Cpu::pop(Memory& mem)
 {
     // Stack is located in memory locations $0100-$01FF and works top-down
     uint16_t address = 0x1FF - SP;
@@ -73,7 +75,7 @@ int8_t Cpu::pop(Memory& mem)
 }
 
 // Pop 16-bit value from stack
-int16_t Cpu::pop16(Memory& mem)
+int16_t NesCpu::Cpu::pop16(Memory& mem)
 {
     // Stack is located in memory locations $0100-$01FF and works top-down
     uint16_t address = 0x1FF - SP;
@@ -89,7 +91,7 @@ int16_t Cpu::pop16(Memory& mem)
 }
 
 // Peek at value on stack
-int8_t Cpu::peek(Memory& mem)
+int8_t NesCpu::Cpu::peek(Memory& mem)
 {
     // Stack is located in memory locations $0100-$01FF and works top-down
     uint16_t address = 0x1FF - SP;
@@ -103,7 +105,7 @@ int8_t Cpu::peek(Memory& mem)
 /////////////////////////////////////
 
 // Add with carry
-void Cpu::ADC(Memory& mem, uint16_t address)
+void NesCpu::Cpu::ADC(Memory& mem, uint16_t address)
 {
     const int8_t val = mem.read(address);
     const uint8_t prevA = A;
@@ -117,7 +119,7 @@ void Cpu::ADC(Memory& mem, uint16_t address)
 }
 
 // Logical and
-void Cpu::AND(Memory& mem, uint16_t address)
+void NesCpu::Cpu::AND(Memory& mem, uint16_t address)
 {
     const int8_t val = mem.read(address);
     A = A & val;
@@ -126,7 +128,7 @@ void Cpu::AND(Memory& mem, uint16_t address)
 }
 
 // Branch on carry clear
-void Cpu::BCC(uint16_t address)
+void NesCpu::Cpu::BCC(uint16_t address)
 {
     if(C == 0)
     {
@@ -135,7 +137,7 @@ void Cpu::BCC(uint16_t address)
 }
 
 // Branch on carry set
-void Cpu::BCS(uint16_t address)
+void NesCpu::Cpu::BCS(uint16_t address)
 {
     if(C == 1)
     {
@@ -144,7 +146,7 @@ void Cpu::BCS(uint16_t address)
 }
 
 // Branch on equal
-void Cpu::BEQ(uint16_t address)
+void NesCpu::Cpu::BEQ(uint16_t address)
 {
     if(Z == 1)
     {
@@ -153,7 +155,7 @@ void Cpu::BEQ(uint16_t address)
 }
 
 // Bit test
-void Cpu::BIT(Memory& mem, uint16_t address)
+void NesCpu::Cpu::BIT(Memory& mem, uint16_t address)
 {
     const int8_t val = mem.read(address);
     Z = (A & val) == 0 ? 1 : 0;
@@ -162,7 +164,7 @@ void Cpu::BIT(Memory& mem, uint16_t address)
 }
 
 // Branch if minus
-void Cpu::BMI(uint16_t address)
+void NesCpu::Cpu::BMI(uint16_t address)
 {
     if (N == 1)
     {
@@ -171,7 +173,7 @@ void Cpu::BMI(uint16_t address)
 }
 
 // Branch if not equal
-void Cpu::BNE(uint16_t address)
+void NesCpu::Cpu::BNE(uint16_t address)
 {
     if (Z == 0)
     {
@@ -180,7 +182,7 @@ void Cpu::BNE(uint16_t address)
 }
 
 // Branch if plus
-void Cpu::BPL(uint16_t address)
+void NesCpu::Cpu::BPL(uint16_t address)
 {
     if (N == 0)
     {
@@ -189,7 +191,7 @@ void Cpu::BPL(uint16_t address)
 }
 
 // Break
-void Cpu::BRK(Memory& mem)
+void NesCpu::Cpu::BRK(Memory& mem)
 {
     push16(mem, PC);
     PHP(mem);
@@ -199,7 +201,7 @@ void Cpu::BRK(Memory& mem)
 }
 
 // Branch if overflow clear
-void Cpu::BVC(uint16_t address)
+void NesCpu::Cpu::BVC(uint16_t address)
 {
     if (V == 0)
     {
@@ -208,7 +210,7 @@ void Cpu::BVC(uint16_t address)
 }
 
 // Branch if overflow set
-void Cpu::BVS(uint16_t address)
+void NesCpu::Cpu::BVS(uint16_t address)
 {
     if (V == 1)
     {
@@ -217,31 +219,31 @@ void Cpu::BVS(uint16_t address)
 }
 
 // Clear carry flag
-void Cpu::CLC()
+void NesCpu::Cpu::CLC()
 {
     C = 0;
 }
 
 // Clear decimal mode
-void Cpu::CLD()
+void NesCpu::Cpu::CLD()
 {
     D = 0;
 }
 
 // Clear interrupt disable
-void Cpu::CLI()
+void NesCpu::Cpu::CLI()
 {
     I = 0;
 }
 
 // Clear overflow flag
-void Cpu::CLV()
+void NesCpu::Cpu::CLV()
 {
     V = 0;
 }
 
 // Compare accumulator
-void Cpu::CMP(Memory& mem, uint16_t address)
+void NesCpu::Cpu::CMP(Memory& mem, uint16_t address)
 {
     const int8_t val = mem.read(address);
     N = (A - val) & 0x80 != 0 ? 1 : 0;
@@ -250,7 +252,7 @@ void Cpu::CMP(Memory& mem, uint16_t address)
 }
 
 // Compare X register
-void Cpu::CPX(Memory& mem, uint16_t address)
+void NesCpu::Cpu::CPX(Memory& mem, uint16_t address)
 {
     const int8_t val = mem.read(address);
     N = (X - val) & 0x80 != 0 ? 1 : 0;
@@ -259,7 +261,7 @@ void Cpu::CPX(Memory& mem, uint16_t address)
 }
 
 // Compare Y register
-void Cpu::CPY(Memory& mem, uint16_t address)
+void NesCpu::Cpu::CPY(Memory& mem, uint16_t address)
 {
     const int8_t val = mem.read(address);
     N = (Y - val) & 0x80 != 0 ? 1 : 0;
@@ -268,7 +270,7 @@ void Cpu::CPY(Memory& mem, uint16_t address)
 }
 
 // Decrement memory
-void Cpu::DEC(Memory& mem, uint16_t address)
+void NesCpu::Cpu::DEC(Memory& mem, uint16_t address)
 {
     int8_t val = mem.read(address);
     --val;
@@ -278,7 +280,7 @@ void Cpu::DEC(Memory& mem, uint16_t address)
 }
 
 // Decrement X register
-void Cpu::DEX()
+void NesCpu::Cpu::DEX()
 {
     --X;
     Z = (X == 0) ? 1 : 0;
@@ -286,7 +288,7 @@ void Cpu::DEX()
 }
 
 // Decrement Y register
-void Cpu::DEY()
+void NesCpu::Cpu::DEY()
 {
     --Y;
     Z = (Y == 0) ? 1 : 0;
@@ -294,7 +296,7 @@ void Cpu::DEY()
 }
 
 // Logical exclusive or
-void Cpu::EOR(Memory& mem, uint16_t address)
+void NesCpu::Cpu::EOR(Memory& mem, uint16_t address)
 {
     int8_t val = mem.read(address);
     A = A^val;
@@ -303,7 +305,7 @@ void Cpu::EOR(Memory& mem, uint16_t address)
 }
 
 // Increment memory
-void Cpu::INC(Memory& mem, uint16_t address)
+void NesCpu::Cpu::INC(Memory& mem, uint16_t address)
 {
     int8_t val = mem.read(address);
     ++val;
@@ -313,7 +315,7 @@ void Cpu::INC(Memory& mem, uint16_t address)
 }
 
 // Increment X register
-void Cpu::INX()
+void NesCpu::Cpu::INX()
 {
     ++X;
     Z = (X == 0) ? 1 : 0;
@@ -321,7 +323,7 @@ void Cpu::INX()
 }
 
 // Increment Y register
-void Cpu::INY()
+void NesCpu::Cpu::INY()
 {
     ++Y;
     Z = (Y == 0) ? 1 : 0;
@@ -329,7 +331,7 @@ void Cpu::INY()
 }
 
 // Jump
-void Cpu::JMP(uint16_t address)
+void NesCpu::Cpu::JMP(uint16_t address)
 {
     // TODO
 
@@ -347,14 +349,14 @@ void Cpu::JMP(uint16_t address)
 }
 
 // Jump to subroutine
-void Cpu::JSR(Memory& mem, uint16_t address)
+void NesCpu::Cpu::JSR(Memory& mem, uint16_t address)
 {
     push16(mem, PC - 1);
     PC = address;
 }
 
 // Load accumulator
-void Cpu::LDA(Memory& mem, uint16_t address)
+void NesCpu::Cpu::LDA(Memory& mem, uint16_t address)
 {
     A = mem.read(address);
     Z = (A == 0) ? 1 : 0;
@@ -362,7 +364,7 @@ void Cpu::LDA(Memory& mem, uint16_t address)
 }
 
 // Load X register
-void Cpu::LDX(Memory& mem, uint16_t address)
+void NesCpu::Cpu::LDX(Memory& mem, uint16_t address)
 {
     X = mem.read(address);
     Z = (X == 0) ? 1 : 0;
@@ -370,7 +372,7 @@ void Cpu::LDX(Memory& mem, uint16_t address)
 }
 
 // Load Y register
-void Cpu::LDY(Memory& mem, uint16_t address)
+void NesCpu::Cpu::LDY(Memory& mem, uint16_t address)
 {
     Y = mem.read(address);
     Z = (Y == 0) ? 1 : 0;
@@ -378,7 +380,7 @@ void Cpu::LDY(Memory& mem, uint16_t address)
 }
 
 // Logical shift right
-void Cpu::LSR(Memory& mem, uint16_t address)
+void NesCpu::Cpu::LSR(Memory& mem, uint16_t address)
 {
     // TODO
     // If in accumulator mode, perform on A instead
@@ -394,13 +396,13 @@ void Cpu::LSR(Memory& mem, uint16_t address)
 }
 
 // No operation
-void Cpu::NOP()
+void NesCpu::Cpu::NOP()
 {
     // Intentionally empty
 }
 
 // Logical inclusive or
-void Cpu::ORA(Memory& mem, uint16_t address)
+void NesCpu::Cpu::ORA(Memory& mem, uint16_t address)
 {
     const int8_t val = mem.read(address);
     A = A|val;
@@ -409,13 +411,13 @@ void Cpu::ORA(Memory& mem, uint16_t address)
 }
 
 // Push accumulator
-void Cpu::PHA(Memory& mem)
+void NesCpu::Cpu::PHA(Memory& mem)
 {
     push(mem, A);
 }
 
 // Push processor status
-void Cpu::PHP(Memory& mem)
+void NesCpu::Cpu::PHP(Memory& mem)
 {
     // Reformat status flags into a single byte arranged as follows:
     // Bits:  | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
@@ -434,7 +436,7 @@ void Cpu::PHP(Memory& mem)
 }
 
 // Pull accumulator
-void Cpu::PLA(Memory& mem)
+void NesCpu::Cpu::PLA(Memory& mem)
 {
     A = pop(mem);
     Z = (A == 0) ? 1 : 0;
@@ -442,7 +444,7 @@ void Cpu::PLA(Memory& mem)
 }
 
 // Pull processor status
-void Cpu::PLP(Memory& mem)
+void NesCpu::Cpu::PLP(Memory& mem)
 {
     // Reformat status flags from a single byte arranged as follows:
     // Bits:  | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
@@ -460,7 +462,7 @@ void Cpu::PLP(Memory& mem)
 }
 
 // Rotate left
-void Cpu::ROL(Memory& mem, uint16_t address)
+void NesCpu::Cpu::ROL(Memory& mem, uint16_t address)
 {
     // TODO
     // If in accumulator mode, perform on A instead
@@ -478,7 +480,7 @@ void Cpu::ROL(Memory& mem, uint16_t address)
 }
 
 // Rotate right
-void Cpu::ROR(Memory& mem, uint16_t address)
+void NesCpu::Cpu::ROR(Memory& mem, uint16_t address)
 {
     // TODO
     // If in accumulator mode, perform on A instead
@@ -496,20 +498,20 @@ void Cpu::ROR(Memory& mem, uint16_t address)
 }
 
 // Return from interrupt
-void Cpu::RTI(Memory& mem)
+void NesCpu::Cpu::RTI(Memory& mem)
 {
     PLP(mem);
     PC = pop16(mem);
 }
 
 // Return from subroutine
-void Cpu::RTS(Memory& mem)
+void NesCpu::Cpu::RTS(Memory& mem)
 {
     PC = pop(mem); 
 }
 
 // Subtract with carry
-void Cpu::SBC(Memory& mem, uint16_t address)
+void NesCpu::Cpu::SBC(Memory& mem, uint16_t address)
 {
     const int8_t val = mem.read(address);
     const int8_t prevA = A;
@@ -523,43 +525,43 @@ void Cpu::SBC(Memory& mem, uint16_t address)
 }
 
 // Set carry flag
-void Cpu::SEC()
+void NesCpu::Cpu::SEC()
 {
     C = 1;
 }
 
 // Set decimal flag
-void Cpu::SED()
+void NesCpu::Cpu::SED()
 {
     D = 1;
 }
 
 // Set interrupt flag
-void Cpu::SEI()
+void NesCpu::Cpu::SEI()
 {
     I = 1;
 }
 
 // Store accumulator
-void Cpu::STA(Memory& mem, uint16_t address)
+void NesCpu::Cpu::STA(Memory& mem, uint16_t address)
 {
     mem.write(address, A);
 }
 
 // Store X register
-void Cpu::STX(Memory& mem, uint16_t address)
+void NesCpu::Cpu::STX(Memory& mem, uint16_t address)
 {
     mem.write(address, X);
 }
 
 // Store Y register
-void Cpu::STY(Memory& mem, uint16_t address)
+void NesCpu::Cpu::STY(Memory& mem, uint16_t address)
 {
     mem.write(address, Y);
 }
 
 // Transfer accumulator to X
-void Cpu::TAX()
+void NesCpu::Cpu::TAX()
 {
     X = A;
     Z = (X == 0) ? 1 : 0;
@@ -567,7 +569,7 @@ void Cpu::TAX()
 }
 
 // Transfer accumulator to Y
-void Cpu::TAY()
+void NesCpu::Cpu::TAY()
 {
     Y = A;
     Z = (Y == 0) ? 1 : 0;
@@ -575,7 +577,7 @@ void Cpu::TAY()
 }
 
 // Transfer stack pointer to X
-void Cpu::TSX(Memory& mem)
+void NesCpu::Cpu::TSX(Memory& mem)
 {
     X = peek(mem);
     Z = (X == 0) ? 1 : 0;
@@ -583,7 +585,7 @@ void Cpu::TSX(Memory& mem)
 }
 
 // Transfer X to accumulator
-void Cpu::TXA()
+void NesCpu::Cpu::TXA()
 {
     A = X;
     Z = (A == 0) ? 1 : 0;
@@ -591,20 +593,36 @@ void Cpu::TXA()
 }
 
 // Transfer X to stack pointer
-void Cpu::TXS(Memory& mem)
+void NesCpu::Cpu::TXS(Memory& mem)
 {
     push(mem, X);
 }
 
 // Transfer Y to accumulator
-void Cpu::TYA()
+void NesCpu::Cpu::TYA()
 {
     A = Y;
     Z = (A == 0) ? 1 : 0;
     N = (A & 0x80 != 0) ? 1 : 0;
 }
 
-
+const std::string NesCpu::Cpu::instructionTable[] = {
+    "BRK","ORA","---","---","---","ORA","ASL","---","PHP","ORA","ASL","---","---","ORA","ASL","---",
+    "BPL","ORA","---","---","---","ORA","ASL","---","CLC","ORA","---","---","---","ORA","ASL","---",
+    "JSR","AND","---","---","BIT","AND","ROL","---","PLP","AND","ROL","---","BIT","AND","ROL","---",
+    "BMI","AND","---","---","---","AND","ROL","---","SEC","AND","---","---","---","AND","ROL","---",
+    "RTI","EOR","---","---","---","EOR","LSR","---","PHA","EOR","LSR","---","JMP","EOR","LSR","---",
+    "BVC","EOR","---","---","---","EOR","LSR","---","CLI","EOR","---","---","---","EOR","LSR","---",
+    "RTS","ADC","---","---","---","ADC","ROR","---","PLA","ADC","ROR","---","JMP","ADC","ROR","---",
+    "BVS","ADC","---","---","---","ADC","ROR","---","SEI","ADC","---","---","---","ADC","ROR","---",
+    "---","STA","---","---","STY","STA","STX","---","DEY","---","TXA","---","STY","STA","STX","---",
+    "BCC","STA","---","---","STY","STA","STX","---","TYA","STA","TXS","---","---","STA","---","---",
+    "LDY","LDA","LDX","---","LDY","LDA","LDX","---","TAY","LDA","TAX","---","LDY","LDA","LDX","---",
+    "BCS","LDA","---","---","LDY","LDA","LDX","---","CLV","LDA","TSX","---","LDY","LDA","LDX","---",
+    "CPY","CMP","---","---","CPY","CMP","DEC","---","INY","CMP","DEX","---","CPY","CMP","DEC","---",
+    "BNE","CMP","---","---","---","CMP","DEC","---","CLD","CMP","---","---","---","CMP","DEC","---",
+    "CPX","SBC","---","---","CPX","SBC","INC","---","INX","SBC","NOP","---","CPX","SBC","INC","---",
+    "BEQ","SBC","---","---","---","SBC","INC","---","SED","SBC","---","---","---","SBC","INC","---"};
 
 
 

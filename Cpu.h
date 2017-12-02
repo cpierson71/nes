@@ -6,11 +6,19 @@
 #include "Memory.h"
 #include "Ppu.h"
 
-namespace Cpu
-{
+namespace NesCpu {
 
-class Cpu {
-    
+    struct opInfo {
+        opInfo() : opcode{}
+            , bytes{}
+            , cycles{}
+        {}
+
+        std::string opcode;
+        uint8_t bytes;
+        uint8_t cycles;
+    };
+
     enum AddressMode : uint8_t
     {
         accumulator,
@@ -27,6 +35,9 @@ class Cpu {
         zeropageXidx,
         zeropageYidx
     };
+
+class Cpu {
+    
     
 public:
     Cpu() : PC{} // Program counter
@@ -46,6 +57,8 @@ public:
     uint16_t PC;
     int8_t X, Y, A;
     uint8_t SP, C, Z, I, D, B, V, N;
+
+    static const std::string instructionTable[];
 
     std::string flagString();
     
@@ -251,24 +264,6 @@ public:
     // Trasnfer Y to accumulator
     void TYA();
 
-private:
-    std::string instructionTable[256]{
-    "BRK","ORA","---","---","---","ORA","ASL","---","PHP","ORA","ASL","---","---","ORA","ASL","---",
-    "BPL","ORA","---","---","---","ORA","ASL","---","CLC","ORA","---","---","---","ORA","ASL","---",
-    "JSR","AND","---","---","BIT","AND","ROL","---","PLP","AND","ROL","---","BIT","AND","ROL","---",
-    "BMI","AND","---","---","---","AND","ROL","---","SEC","AND","---","---","---","AND","ROL","---",
-    "RTI","EOR","---","---","---","EOR","LSR","---","PHA","EOR","LSR","---","JMP","EOR","LSR","---",
-    "BVC","EOR","---","---","---","EOR","LSR","---","CLI","EOR","---","---","---","EOR","LSR","---",
-    "RTS","ADC","---","---","---","ADC","ROR","---","PLA","ADC","ROR","---","JMP","ADC","ROR","---",
-    "BVS","ADC","---","---","---","ADC","ROR","---","SEI","ADC","---","---","---","ADC","ROR","---",
-    "---","STA","---","---","STY","STA","STX","---","DEY","---","TXA","---","STY","STA","STX","---",
-    "BCC","STA","---","---","STY","STA","STX","---","TYA","STA","TXS","---","---","STA","---","---",
-    "LDY","LDA","LDX","---","LDY","LDA","LDX","---","TAY","LDA","TAX","---","LDY","LDA","LDX","---",
-    "BCS","LDA","---","---","LDY","LDA","LDX","---","CLV","LDA","TSX","---","LDY","LDA","LDX","---",
-    "CPY","CMP","---","---","CPY","CMP","DEC","---","INY","CMP","DEX","---","CPY","CMP","DEC","---",
-    "BNE","CMP","---","---","---","CMP","DEC","---","CLD","CMP","---","---","---","CMP","DEC","---",
-    "CPX","SBC","---","---","CPX","SBC","INC","---","INX","SBC","NOP","---","CPX","SBC","INC","---",
-    "BEQ","SBC","---","---","---","SBC","INC","---","SED","SBC","---","---","---","SBC","INC","---"};
 
 };
 
