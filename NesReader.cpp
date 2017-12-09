@@ -1,23 +1,20 @@
 #include <iostream>
 #include <exception>
+#include <type_traits>
 #include "NesReader.h"
 
 void NesReader::initialize(NesMapper::Mapper &mapper)
 {
     NesMapper::MapperInfo mapperInfo;
-
     open();
     readCartridge();
-    std::cout << "2data: " << cartridgeData[16] << '\n';
     mapperInfo = readHeader();
     mapper.setMapperInfo(mapperInfo);
-
-
 }
 
-std::vector<uint8_t> NesReader::getCartridgeData()
+NesReader::uint8Vec* NesReader::getCartridgeData()
 {
-    return cartridgeData;
+    return &cartridgeData;
 }
 
 void NesReader::setFilename(std::string name)
@@ -33,24 +30,30 @@ void NesReader::open()
     {
         std::cout << "Error opening file \n";
     }
+    else
+    {
+        fileStream.seekg(0, std::ios_base::end);
+        fileSize = static_cast<size_t>(fileStream.tellg());
+        fileStream.seekg(0, std::ios_base::beg);
+    }
 }
 
 void NesReader::readCartridge()
 {
+    cartridgeData.resize(fileSize);
     try 
     {
+        size_t count = 0;
         while (!fileStream.eof())
         {
             uint8_t byte = static_cast<uint8_t>(fileStream.get());
-            std::cout << (int)byte << '\n';
-            cartridgeData.push_back(byte);
+            cartridgeData[count++] = byte;
         }
     }
     catch(std::exception &e)
     {
         std::cout << e.what() << '\n';
     }
-    fileStream.close();
 }
 
 NesMapper::MapperInfo NesReader::readHeader()
@@ -62,7 +65,7 @@ NesMapper::MapperInfo NesReader::readHeader()
     uint8_t header[headerSize];
     for (uint32_t i = 0; i < headerSize; ++i)
     {
-        header[i] = cartridgeData[i];
+        header[i] = cartridgeData.at(i);
     }
 
     // Check that it is a .nes file
@@ -123,4 +126,5 @@ void NesReader::readTrainer()
     // TODO: Do anything with trainer data?
 
 }
+
 

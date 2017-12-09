@@ -27,15 +27,8 @@ void NesMapper::Mapper::initialize(std::vector<uint8_t> &cartridgeData, Memory &
     {
         for (uint32_t i = 0; i < NesMapper::prgRomSize; ++i)
         {
-            std::cout << "cartData: " << cartridgeData[prgRomOffset + i] << '\n';
-            std::cout << "Mem address: " << NesMapper::prgRomStartingAddress + i << '\n';
-
             memory.write(NesMapper::prgRomStartingAddress + i, cartridgeData[prgRomOffset + i]);
-            uint32_t lastRomBankStart = prgRomOffset + NesMapper::prgRomSize*(mapperInfo.numChrRomBanks-1);
-
-            std::cout << "cartData: " << cartridgeData[lastRomBankStart + i] << '\n';
-            std::cout << "Mem address: " << NesMapper::prgRomStartingAddress + NesMapper::prgRomUpperBankOffset + i << '\n';
-
+            uint32_t lastRomBankStart = prgRomOffset + NesMapper::prgRomSize*(mapperInfo.numPrgRomBanks-1);
             memory.write(NesMapper::prgRomStartingAddress + NesMapper::prgRomUpperBankOffset + i, cartridgeData[lastRomBankStart + i]);
         }
     }

@@ -1,4 +1,5 @@
 #include "Cpu.h"
+#include <iostream>
 
 std::string NesCpu::Cpu::flagString()
 {
@@ -16,6 +17,13 @@ std::string NesCpu::Cpu::flagString()
 void NesCpu::Cpu::reset(Memory& mem)
 {
     PC = (mem.read(0xFFFD) << 8) + mem.read(0xFFFC);
+    std::cout << (int)PC << std::endl;
+
+    for (int i = 0; i < 15; ++i)
+    {
+        std::cout << (int)mem.read(PC+i) << '\n';
+    }
+
 
     // TODO 
 

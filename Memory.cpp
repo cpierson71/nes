@@ -2,7 +2,7 @@
 #include "Memory.h"
 
 
-int8_t Memory::read(uint16_t address)
+uint8_t Memory::read(uint16_t address)
 {
     return data[address];
 }
@@ -12,7 +12,7 @@ void Memory::write(uint16_t address, int8_t value)
     data[address] = value;
 }
 
-int8_t* Memory::getAddress(uint16_t address)
+uint8_t* Memory::getAddress(uint16_t address)
 {
     return &data[address];
 }
