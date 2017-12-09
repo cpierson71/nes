@@ -9,11 +9,6 @@
 namespace NesCpu {
 
     struct opInfo {
-        opInfo() : opcode{}
-            , bytes{}
-            , cycles{}
-        {}
-
         std::string opcode;
         uint8_t bytes;
         uint8_t cycles;
@@ -216,13 +211,15 @@ public:
     static const std::string instructionTable[];
 
     std::string flagString();
+
+    void reset(Memory& mem);
     
     /////////////////////////////////////
     // PPU control operations
     /////////////////////////////////////
 
     // Enable 8x8 or 8x16 sprites
-    void enableSpriteMode(Memory& mem, Ppu::SpriteType);
+    void enableSpriteMode(Memory& mem, NesPpu::SpriteType);
     
     // Disable non-maskable interrupt on V-Blank
     void disableNMI(Memory& mem);

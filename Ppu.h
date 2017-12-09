@@ -1,8 +1,9 @@
 #ifndef PPU_HXX
 #define PPU_HXX
+
 #include <stdint.h>
 
-namespace Ppu
+namespace NesPpu
 {
 
 enum SpriteType : int8_t

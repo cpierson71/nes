@@ -1,5 +1,6 @@
 #ifndef MEMORY_HXX
 #define MEMORY_HXX
+
 #include <stdint.h>
 
 class Memory {

@@ -1,22 +1,13 @@
-#include "Memory.h"
-#include "Cpu.h"
-#include "NesReader.h"
-
 #include <iostream>
+#include "Console.h"
 
 int main()
 {
-    NesCpu::Cpu cpu{};
-    Memory memory{};
-    NesReader nesReader{};
+    Console nes;
 
-    nesReader.setFilename("Contra (USA).nes");
-    nesReader.open();
+    nes.initialize();
 
-    NesCpu::opCode opcode;
-    opcode = nesReader.readOperation();
 
-    std::cout << opcode << std::endl;
 
     return 0;
 }

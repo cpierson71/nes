@@ -1,5 +1,6 @@
-#include "Memory.h"
 #include <iostream>
+#include "Memory.h"
+
 
 int8_t Memory::read(uint16_t address)
 {

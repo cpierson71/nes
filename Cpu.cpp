@@ -13,19 +13,25 @@ std::string NesCpu::Cpu::flagString()
     return flagString;
 }
 
+void NesCpu::Cpu::reset(Memory& mem)
+{
+    PC = (mem.read(0xFFFD) << 8) + mem.read(0xFFFC);
 
+    // TODO 
+
+}
 
 /////////////////////////////////////
 // PPU control operations
 /////////////////////////////////////
 
 // Enable 8x8 or 8x16 sprites
-void NesCpu::Cpu::enableSpriteMode(Memory& mem, Ppu::SpriteType spriteType)
+void NesCpu::Cpu::enableSpriteMode(Memory& mem, NesPpu::SpriteType spriteType)
 {
     // Setting bit 5 of $2000 enables 8x16 sprites
     const uint8_t bitNum = 5;
     // 8x8 == 0, 8x16 == 1
-    mem.setBit(Ppu::ppuControlRegister1, bitNum, spriteType);
+    mem.setBit(NesPpu::ppuControlRegister1, bitNum, spriteType);
 }
 
 // Disable non-maskable interrupt (NMI) on V-Blank
@@ -33,7 +39,7 @@ void NesCpu::Cpu::disableNMI(Memory& mem)
 {
     // Setting bit 7 of $2000 disables NMI
     const uint8_t bitNum = 7;
-    mem.setBit(Ppu::ppuControlRegister1, bitNum, 0);
+    mem.setBit(NesPpu::ppuControlRegister1, bitNum, 0);
 
 }
 
