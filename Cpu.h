@@ -3,18 +3,17 @@
 
 #include <stdint.h>
 #include <string>
+#include <functional>
 #include "Memory.h"
 #include "Ppu.h"
 
+
+
 namespace NesCpu {
 
-    struct opInfo {
-        std::string opcode;
-        uint8_t bytes;
-        uint8_t cycles;
-    };
+class Cpu;
 
-    enum opCode : uint8_t
+    enum opcode : uint8_t
     {
         BRK,
         ORA_IX,
@@ -186,6 +185,16 @@ namespace NesCpu {
         zeropageYidx
     };
 
+    struct OpInfo {
+        std::string opcode;
+        uint8_t bytes;
+        uint8_t cycles;
+        AddressMode addressMode;
+        std::function<void(Cpu&, Memory&, uint16_t)> operation;
+    };
+
+    static constexpr uint32_t numOpcodes = 256;
+
 class Cpu {
     
     
@@ -202,15 +211,23 @@ public:
         , B{}    // Break command
         , V{}    // Overflow flag
         , N{}    // Negative flag
+        , opcodeInfoArray{}
     {}
 
     uint16_t PC;
     int8_t X, Y, A;
     uint8_t SP, C, Z, I, D, B, V, N;
+    OpInfo opcodeInfoArray[numOpcodes];
 
-    static const std::string instructionTable[];
+    //static const std::string opcodeNameArray[];
+
+    static const uint8_t opcodeByteArray[];
+    
+    static const std::function<void(Cpu&, Memory&, uint16_t)> opcodeArray[];
 
     std::string flagString();
+
+    void setupOpcodes();
 
     void reset(Memory& mem);
     
@@ -228,7 +245,6 @@ public:
     /////////////////////////////////////
     // Stack operations
     /////////////////////////////////////
-    // Move to Memory class?
 
     // Push 8-bit value to stack
     void push(Memory& mem, int8_t value);
@@ -257,47 +273,50 @@ public:
     // Logical and
     void AND(Memory& mem, uint16_t address);
 
+    // Arithmetic shift left
+    void ASL(Memory& mem, uint16_t address);
+
     // Branch if carry clear
-    void BCC(uint16_t address);
+    void BCC(Memory& mem, uint16_t address);
 
     // Branch if carry set
-    void BCS(uint16_t address);
+    void BCS(Memory& mem, uint16_t address);
 
     // Branch if equal
-    void BEQ(uint16_t address);
+    void BEQ(Memory& mem, uint16_t address);
 
     // Bit test
     void BIT(Memory& mem, uint16_t address);
 
     // Branch if minus
-    void BMI(uint16_t address);
+    void BMI(Memory& mem, uint16_t address);
 
     // Branch if not equal
-    void BNE(uint16_t address);
+    void BNE(Memory& mem, uint16_t address);
 
     // Branch if plus
-    void BPL(uint16_t address);
+    void BPL(Memory& mem, uint16_t address);
 
     // Break
-    void BRK(Memory& mem);
+    void BRK(Memory& mem, uint16_t address);
 
     // Branch if overflow clear
-    void BVC(uint16_t address);
+    void BVC(Memory& mem, uint16_t address);
 
     // Branch if overflow set
-    void BVS(uint16_t address);
+    void BVS(Memory& mem, uint16_t address);
 
     // Clear carry flag
-    void CLC();
+    void CLC(Memory& mem, uint16_t address);
 
     // Clear decimal mode
-    void CLD();
+    void CLD(Memory& mem, uint16_t address);
 
     // Clear interrupt disable
-    void CLI();
+    void CLI(Memory& mem, uint16_t address);
 
     // Clear overflow flag
-    void CLV();
+    void CLV(Memory& mem, uint16_t address);
 
     // Compare accumulator
     void CMP(Memory& mem, uint16_t address);
@@ -312,10 +331,10 @@ public:
     void DEC(Memory& mem, uint16_t address);
 
     // Decrement X register
-    void DEX();
+    void DEX(Memory& mem, uint16_t address);
 
     // Decrement Y register
-    void DEY();
+    void DEY(Memory& mem, uint16_t address);
     
     // Exclusive or
     void EOR(Memory& mem, uint16_t address);
@@ -324,13 +343,13 @@ public:
     void INC(Memory& mem, uint16_t address);
 
     // Increment X register
-    void INX();
+    void INX(Memory& mem, uint16_t address);
 
     // Increment Y register
-    void INY();
+    void INY(Memory& mem, uint16_t address);
 
     // Jump
-    void JMP(uint16_t address);
+    void JMP(Memory& mem, uint16_t address);
 
     // Jump to subroutine
     void JSR(Memory& mem, uint16_t address);
@@ -348,22 +367,22 @@ public:
     void LSR(Memory& mem, uint16_t address);
 
     // No operation
-    void NOP();
+    void NOP(Memory& mem, uint16_t address);
 
     // Logical inclusive or
     void ORA(Memory& mem, uint16_t address);
 
     // Push accumulator
-    void PHA(Memory& mem);
+    void PHA(Memory& mem, uint16_t address);
 
     // Push processor status
-    void PHP(Memory& mem);
+    void PHP(Memory& mem, uint16_t address);
 
     // Pull accumulator
-    void PLA(Memory& mem);
+    void PLA(Memory& mem, uint16_t address);
 
     // Pull processor status
-    void PLP(Memory& mem);
+    void PLP(Memory& mem, uint16_t address);
 
     // Rotate left
     void ROL(Memory& mem, uint16_t address);
@@ -372,22 +391,22 @@ public:
     void ROR(Memory& mem, uint16_t address);
 
     // Return from interrupt
-    void RTI(Memory& mem);
+    void RTI(Memory& mem, uint16_t address);
 
     // Return from subroutine
-    void RTS(Memory& mem);
+    void RTS(Memory& mem, uint16_t address);
 
     // Subtract with carry
     void SBC(Memory& mem, uint16_t address);
 
     // Set carry flag
-    void SEC();
+    void SEC(Memory& mem, uint16_t address);
 
     // Set decimal flag
-    void SED();
+    void SED(Memory& mem, uint16_t address);
 
     // Set interrupt flag
-    void SEI();
+    void SEI(Memory& mem, uint16_t address);
 
     // Store accumulator
     void STA(Memory& mem, uint16_t address);
@@ -399,23 +418,25 @@ public:
     void STY(Memory& mem, uint16_t address);
 
     // Transfer accumulator to X
-    void TAX();
+    void TAX(Memory& mem, uint16_t address);
 
     // Transfer accumulator to Y
-    void TAY();
+    void TAY(Memory& mem, uint16_t address);
 
     // Transfer stack pointer to X
-    void TSX(Memory& mem);
+    void TSX(Memory& mem, uint16_t address);
 
     // Transfer X to accumulator
-    void TXA();
+    void TXA(Memory& mem, uint16_t address);
 
     // Transfer X to stack pointer
-    void TXS(Memory& mem);
+    void TXS(Memory& mem, uint16_t address);
 
     // Trasnfer Y to accumulator
-    void TYA();
+    void TYA(Memory& mem, uint16_t address);
 
+    // For unused opcodes
+    void UNK(Memory& mem, uint16_t address);
 
 };
 

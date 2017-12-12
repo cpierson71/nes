@@ -1,6 +1,10 @@
 #include "Cpu.h"
 #include <iostream>
 
+#define MAKE_OPINFO(idx) opinfo.bytes = opcodeByteArray[idx]; \
+opinfo.operation = NesCpu::Cpu::opcodeArray[idx]
+
+
 std::string NesCpu::Cpu::flagString()
 {
     std::string flagString = "C: " + std::to_string(C)
@@ -26,6 +30,19 @@ void NesCpu::Cpu::reset(Memory& mem)
 
 
     // TODO 
+
+}
+
+void NesCpu::Cpu::setupOpcodes()
+{
+    for (uint32_t i = 0; i < numOpcodes; ++i)
+    {
+        OpInfo opinfo;
+        // TODO: Finish macro to update remaining info
+        MAKE_OPINFO(i);
+        opcodeInfoArray[i] = opinfo;
+    }
+
 
 }
 
@@ -141,8 +158,20 @@ void NesCpu::Cpu::AND(Memory& mem, uint16_t address)
     N = (A & 0x80 != 0) ? 1 : 0;
 }
 
+// Arithmetic shift left
+void NesCpu::Cpu::ASL(Memory& mem, uint16_t address)
+{
+    // TODO: Check for accumulator address mode
+    int8_t val = mem.read(address);
+    C = (val & 0x80 != 0) ? 1 : 0;
+    val <<= 2;
+    Z = (A == 0) ? 1 : 0;
+    N = (val & 0x80 != 0) ? 1 : 0;
+    mem.write(address, val);
+}
+
 // Branch on carry clear
-void NesCpu::Cpu::BCC(uint16_t address)
+void NesCpu::Cpu::BCC(Memory& mem, uint16_t address)
 {
     if(C == 0)
     {
@@ -151,7 +180,7 @@ void NesCpu::Cpu::BCC(uint16_t address)
 }
 
 // Branch on carry set
-void NesCpu::Cpu::BCS(uint16_t address)
+void NesCpu::Cpu::BCS(Memory& mem, uint16_t address)
 {
     if(C == 1)
     {
@@ -160,7 +189,7 @@ void NesCpu::Cpu::BCS(uint16_t address)
 }
 
 // Branch on equal
-void NesCpu::Cpu::BEQ(uint16_t address)
+void NesCpu::Cpu::BEQ(Memory& mem, uint16_t address)
 {
     if(Z == 1)
     {
@@ -178,7 +207,7 @@ void NesCpu::Cpu::BIT(Memory& mem, uint16_t address)
 }
 
 // Branch if minus
-void NesCpu::Cpu::BMI(uint16_t address)
+void NesCpu::Cpu::BMI(Memory& mem, uint16_t address)
 {
     if (N == 1)
     {
@@ -187,7 +216,7 @@ void NesCpu::Cpu::BMI(uint16_t address)
 }
 
 // Branch if not equal
-void NesCpu::Cpu::BNE(uint16_t address)
+void NesCpu::Cpu::BNE(Memory& mem, uint16_t address)
 {
     if (Z == 0)
     {
@@ -196,7 +225,7 @@ void NesCpu::Cpu::BNE(uint16_t address)
 }
 
 // Branch if plus
-void NesCpu::Cpu::BPL(uint16_t address)
+void NesCpu::Cpu::BPL(Memory& mem, uint16_t address)
 {
     if (N == 0)
     {
@@ -205,17 +234,20 @@ void NesCpu::Cpu::BPL(uint16_t address)
 }
 
 // Break
-void NesCpu::Cpu::BRK(Memory& mem)
+void NesCpu::Cpu::BRK(Memory& mem, uint16_t address)
 {
     push16(mem, PC);
-    PHP(mem);
+    PHP(mem,0);
     uint16_t* irqVec_p = reinterpret_cast<uint16_t*>(mem.getAddress(0xFFFE));
     PC = *irqVec_p;
     B = 1;
+
+    std::cout << "BRK\n";
+
 }
 
 // Branch if overflow clear
-void NesCpu::Cpu::BVC(uint16_t address)
+void NesCpu::Cpu::BVC(Memory& mem, uint16_t address)
 {
     if (V == 0)
     {
@@ -224,7 +256,7 @@ void NesCpu::Cpu::BVC(uint16_t address)
 }
 
 // Branch if overflow set
-void NesCpu::Cpu::BVS(uint16_t address)
+void NesCpu::Cpu::BVS(Memory& mem, uint16_t address)
 {
     if (V == 1)
     {
@@ -233,25 +265,25 @@ void NesCpu::Cpu::BVS(uint16_t address)
 }
 
 // Clear carry flag
-void NesCpu::Cpu::CLC()
+void NesCpu::Cpu::CLC(Memory& mem, uint16_t address)
 {
     C = 0;
 }
 
 // Clear decimal mode
-void NesCpu::Cpu::CLD()
+void NesCpu::Cpu::CLD(Memory& mem, uint16_t address)
 {
     D = 0;
 }
 
 // Clear interrupt disable
-void NesCpu::Cpu::CLI()
+void NesCpu::Cpu::CLI(Memory& mem, uint16_t address)
 {
     I = 0;
 }
 
 // Clear overflow flag
-void NesCpu::Cpu::CLV()
+void NesCpu::Cpu::CLV(Memory& mem, uint16_t address)
 {
     V = 0;
 }
@@ -294,7 +326,7 @@ void NesCpu::Cpu::DEC(Memory& mem, uint16_t address)
 }
 
 // Decrement X register
-void NesCpu::Cpu::DEX()
+void NesCpu::Cpu::DEX(Memory& mem, uint16_t address)
 {
     --X;
     Z = (X == 0) ? 1 : 0;
@@ -302,7 +334,7 @@ void NesCpu::Cpu::DEX()
 }
 
 // Decrement Y register
-void NesCpu::Cpu::DEY()
+void NesCpu::Cpu::DEY(Memory& mem, uint16_t address)
 {
     --Y;
     Z = (Y == 0) ? 1 : 0;
@@ -329,7 +361,7 @@ void NesCpu::Cpu::INC(Memory& mem, uint16_t address)
 }
 
 // Increment X register
-void NesCpu::Cpu::INX()
+void NesCpu::Cpu::INX(Memory& mem, uint16_t address)
 {
     ++X;
     Z = (X == 0) ? 1 : 0;
@@ -337,7 +369,7 @@ void NesCpu::Cpu::INX()
 }
 
 // Increment Y register
-void NesCpu::Cpu::INY()
+void NesCpu::Cpu::INY(Memory& mem, uint16_t address)
 {
     ++Y;
     Z = (Y == 0) ? 1 : 0;
@@ -345,7 +377,7 @@ void NesCpu::Cpu::INY()
 }
 
 // Jump
-void NesCpu::Cpu::JMP(uint16_t address)
+void NesCpu::Cpu::JMP(Memory& mem, uint16_t address)
 {
     // TODO
 
@@ -410,7 +442,7 @@ void NesCpu::Cpu::LSR(Memory& mem, uint16_t address)
 }
 
 // No operation
-void NesCpu::Cpu::NOP()
+void NesCpu::Cpu::NOP(Memory& mem, uint16_t address)
 {
     // Intentionally empty
 }
@@ -425,13 +457,13 @@ void NesCpu::Cpu::ORA(Memory& mem, uint16_t address)
 }
 
 // Push accumulator
-void NesCpu::Cpu::PHA(Memory& mem)
+void NesCpu::Cpu::PHA(Memory& mem, uint16_t address)
 {
     push(mem, A);
 }
 
 // Push processor status
-void NesCpu::Cpu::PHP(Memory& mem)
+void NesCpu::Cpu::PHP(Memory& mem, uint16_t address)
 {
     // Reformat status flags into a single byte arranged as follows:
     // Bits:  | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
@@ -450,7 +482,7 @@ void NesCpu::Cpu::PHP(Memory& mem)
 }
 
 // Pull accumulator
-void NesCpu::Cpu::PLA(Memory& mem)
+void NesCpu::Cpu::PLA(Memory& mem, uint16_t address)
 {
     A = pop(mem);
     Z = (A == 0) ? 1 : 0;
@@ -458,7 +490,7 @@ void NesCpu::Cpu::PLA(Memory& mem)
 }
 
 // Pull processor status
-void NesCpu::Cpu::PLP(Memory& mem)
+void NesCpu::Cpu::PLP(Memory& mem, uint16_t address)
 {
     // Reformat status flags from a single byte arranged as follows:
     // Bits:  | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
@@ -512,14 +544,14 @@ void NesCpu::Cpu::ROR(Memory& mem, uint16_t address)
 }
 
 // Return from interrupt
-void NesCpu::Cpu::RTI(Memory& mem)
+void NesCpu::Cpu::RTI(Memory& mem, uint16_t address)
 {
-    PLP(mem);
+    PLP(mem,0);
     PC = pop16(mem);
 }
 
 // Return from subroutine
-void NesCpu::Cpu::RTS(Memory& mem)
+void NesCpu::Cpu::RTS(Memory& mem, uint16_t address)
 {
     PC = pop(mem); 
 }
@@ -539,19 +571,19 @@ void NesCpu::Cpu::SBC(Memory& mem, uint16_t address)
 }
 
 // Set carry flag
-void NesCpu::Cpu::SEC()
+void NesCpu::Cpu::SEC(Memory& mem, uint16_t address)
 {
     C = 1;
 }
 
 // Set decimal flag
-void NesCpu::Cpu::SED()
+void NesCpu::Cpu::SED(Memory& mem, uint16_t address)
 {
     D = 1;
 }
 
 // Set interrupt flag
-void NesCpu::Cpu::SEI()
+void NesCpu::Cpu::SEI(Memory& mem, uint16_t address)
 {
     I = 1;
 }
@@ -575,7 +607,7 @@ void NesCpu::Cpu::STY(Memory& mem, uint16_t address)
 }
 
 // Transfer accumulator to X
-void NesCpu::Cpu::TAX()
+void NesCpu::Cpu::TAX(Memory& mem, uint16_t address)
 {
     X = A;
     Z = (X == 0) ? 1 : 0;
@@ -583,7 +615,7 @@ void NesCpu::Cpu::TAX()
 }
 
 // Transfer accumulator to Y
-void NesCpu::Cpu::TAY()
+void NesCpu::Cpu::TAY(Memory& mem, uint16_t address)
 {
     Y = A;
     Z = (Y == 0) ? 1 : 0;
@@ -591,7 +623,7 @@ void NesCpu::Cpu::TAY()
 }
 
 // Transfer stack pointer to X
-void NesCpu::Cpu::TSX(Memory& mem)
+void NesCpu::Cpu::TSX(Memory& mem, uint16_t address)
 {
     X = peek(mem);
     Z = (X == 0) ? 1 : 0;
@@ -599,7 +631,7 @@ void NesCpu::Cpu::TSX(Memory& mem)
 }
 
 // Transfer X to accumulator
-void NesCpu::Cpu::TXA()
+void NesCpu::Cpu::TXA(Memory& mem, uint16_t address)
 {
     A = X;
     Z = (A == 0) ? 1 : 0;
@@ -607,20 +639,27 @@ void NesCpu::Cpu::TXA()
 }
 
 // Transfer X to stack pointer
-void NesCpu::Cpu::TXS(Memory& mem)
+void NesCpu::Cpu::TXS(Memory& mem, uint16_t address)
 {
     push(mem, X);
 }
 
 // Transfer Y to accumulator
-void NesCpu::Cpu::TYA()
+void NesCpu::Cpu::TYA(Memory& mem, uint16_t address)
 {
     A = Y;
     Z = (A == 0) ? 1 : 0;
     N = (A & 0x80 != 0) ? 1 : 0;
 }
 
-const std::string NesCpu::Cpu::instructionTable[] = {
+// For unused opcodes
+void NesCpu::Cpu::UNK(Memory& mem, uint16_t address)
+{
+    std::cout << "Error: Unused opcode used\n";
+}
+
+/*
+const std::string NesCpu::Cpu::opcodeNameArray[] = {
     "BRK","ORA","---","---","---","ORA","ASL","---","PHP","ORA","ASL","---","---","ORA","ASL","---",
     "BPL","ORA","---","---","---","ORA","ASL","---","CLC","ORA","---","---","---","ORA","ASL","---",
     "JSR","AND","---","---","BIT","AND","ROL","---","PLP","AND","ROL","---","BIT","AND","ROL","---",
@@ -637,6 +676,41 @@ const std::string NesCpu::Cpu::instructionTable[] = {
     "BNE","CMP","---","---","---","CMP","DEC","---","CLD","CMP","---","---","---","CMP","DEC","---",
     "CPX","SBC","---","---","CPX","SBC","INC","---","INX","SBC","NOP","---","CPX","SBC","INC","---",
     "BEQ","SBC","---","---","---","SBC","INC","---","SED","SBC","---","---","---","SBC","INC","---"};
+*/
 
+const uint8_t NesCpu::Cpu::opcodeByteArray[] = {
+    1, 2, 0, 0, 0, 2, 2, 0, 1, 2, 1, 0, 0, 3, 3, 0,
+    2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0,
+    3, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
+    2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0,
+    1, 2, 0, 0, 0, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
+    2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0,
+    1, 2, 0, 0, 0, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
+    2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0,
+    0, 2, 0, 0, 2, 2, 2, 0, 1, 0, 1, 0, 3, 3, 3, 0,
+    2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 0, 3, 0, 0,
+    2, 2, 2, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
+    2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
+    2, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
+    2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0,
+    2, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0,
+    2, 2, 0, 0, 0, 2, 2, 0, 1, 3, 0, 0, 0, 3, 3, 0};
 
+const std::function<void(NesCpu::Cpu&, Memory&, uint16_t)> NesCpu::Cpu::opcodeArray[] = {
+    NesCpu::Cpu::BRK, NesCpu::Cpu::ORA, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::ORA, NesCpu::Cpu::ASL, NesCpu::Cpu::UNK, NesCpu::Cpu::PHP, NesCpu::Cpu::ORA, NesCpu::Cpu::ASL, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::ORA, NesCpu::Cpu::ASL, NesCpu::Cpu::UNK, NesCpu::Cpu::
+    BPL, NesCpu::Cpu::ORA, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::ORA, NesCpu::Cpu::ASL, NesCpu::Cpu::UNK, NesCpu::Cpu::CLC, NesCpu::Cpu::ORA, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::ORA, NesCpu::Cpu::ASL, NesCpu::Cpu::UNK, NesCpu::Cpu::
+    JSR, NesCpu::Cpu::AND, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::BIT, NesCpu::Cpu::AND, NesCpu::Cpu::ROL, NesCpu::Cpu::UNK, NesCpu::Cpu::PLP, NesCpu::Cpu::AND, NesCpu::Cpu::ROL, NesCpu::Cpu::UNK, NesCpu::Cpu::BIT, NesCpu::Cpu::AND, NesCpu::Cpu::ROL, NesCpu::Cpu::UNK, NesCpu::Cpu::
+    BMI, NesCpu::Cpu::AND, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::AND, NesCpu::Cpu::ROL, NesCpu::Cpu::UNK, NesCpu::Cpu::SEC, NesCpu::Cpu::AND, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::AND, NesCpu::Cpu::ROL, NesCpu::Cpu::UNK, NesCpu::Cpu::
+    RTI, NesCpu::Cpu::EOR, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::EOR, NesCpu::Cpu::LSR, NesCpu::Cpu::UNK, NesCpu::Cpu::PHA, NesCpu::Cpu::EOR, NesCpu::Cpu::LSR, NesCpu::Cpu::UNK, NesCpu::Cpu::JMP, NesCpu::Cpu::EOR, NesCpu::Cpu::LSR, NesCpu::Cpu::UNK, NesCpu::Cpu::
+    BVC, NesCpu::Cpu::EOR, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::EOR, NesCpu::Cpu::LSR, NesCpu::Cpu::UNK, NesCpu::Cpu::CLI, NesCpu::Cpu::EOR, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::EOR, NesCpu::Cpu::LSR, NesCpu::Cpu::UNK, NesCpu::Cpu::
+    RTS, NesCpu::Cpu::ADC, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::ADC, NesCpu::Cpu::ROR, NesCpu::Cpu::UNK, NesCpu::Cpu::PLA, NesCpu::Cpu::ADC, NesCpu::Cpu::ROR, NesCpu::Cpu::UNK, NesCpu::Cpu::JMP, NesCpu::Cpu::ADC, NesCpu::Cpu::ROR, NesCpu::Cpu::UNK, NesCpu::Cpu::
+    BVS, NesCpu::Cpu::ADC, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::ADC, NesCpu::Cpu::ROR, NesCpu::Cpu::UNK, NesCpu::Cpu::SEI, NesCpu::Cpu::ADC, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::ADC, NesCpu::Cpu::ROR, NesCpu::Cpu::UNK, NesCpu::Cpu::
+    UNK, NesCpu::Cpu::STA, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::STY, NesCpu::Cpu::STA, NesCpu::Cpu::STX, NesCpu::Cpu::UNK, NesCpu::Cpu::DEY, NesCpu::Cpu::UNK, NesCpu::Cpu::TXA, NesCpu::Cpu::UNK, NesCpu::Cpu::STY, NesCpu::Cpu::STA, NesCpu::Cpu::STX, NesCpu::Cpu::UNK, NesCpu::Cpu::
+    BCC, NesCpu::Cpu::STA, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::STY, NesCpu::Cpu::STA, NesCpu::Cpu::STX, NesCpu::Cpu::UNK, NesCpu::Cpu::TYA, NesCpu::Cpu::STA, NesCpu::Cpu::TXS, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::STA, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::
+    LDY, NesCpu::Cpu::LDA, NesCpu::Cpu::LDX, NesCpu::Cpu::UNK, NesCpu::Cpu::LDY, NesCpu::Cpu::LDA, NesCpu::Cpu::LDX, NesCpu::Cpu::UNK, NesCpu::Cpu::TAY, NesCpu::Cpu::LDA, NesCpu::Cpu::TAX, NesCpu::Cpu::UNK, NesCpu::Cpu::LDY, NesCpu::Cpu::LDA, NesCpu::Cpu::LDX, NesCpu::Cpu::UNK, NesCpu::Cpu::
+    BCS, NesCpu::Cpu::LDA, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::LDY, NesCpu::Cpu::LDA, NesCpu::Cpu::LDX, NesCpu::Cpu::UNK, NesCpu::Cpu::CLV, NesCpu::Cpu::LDA, NesCpu::Cpu::TSX, NesCpu::Cpu::UNK, NesCpu::Cpu::LDY, NesCpu::Cpu::LDA, NesCpu::Cpu::LDX, NesCpu::Cpu::UNK, NesCpu::Cpu::
+    CPY, NesCpu::Cpu::CMP, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::CPY, NesCpu::Cpu::CMP, NesCpu::Cpu::DEC, NesCpu::Cpu::UNK, NesCpu::Cpu::INY, NesCpu::Cpu::CMP, NesCpu::Cpu::DEX, NesCpu::Cpu::UNK, NesCpu::Cpu::CPY, NesCpu::Cpu::CMP, NesCpu::Cpu::DEC, NesCpu::Cpu::UNK, NesCpu::Cpu::
+    BNE, NesCpu::Cpu::CMP, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::CMP, NesCpu::Cpu::DEC, NesCpu::Cpu::UNK, NesCpu::Cpu::CLD, NesCpu::Cpu::CMP, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::CMP, NesCpu::Cpu::DEC, NesCpu::Cpu::UNK, NesCpu::Cpu::
+    CPX, NesCpu::Cpu::SBC, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::CPX, NesCpu::Cpu::SBC, NesCpu::Cpu::INC, NesCpu::Cpu::UNK, NesCpu::Cpu::INX, NesCpu::Cpu::SBC, NesCpu::Cpu::NOP, NesCpu::Cpu::UNK, NesCpu::Cpu::CPX, NesCpu::Cpu::SBC, NesCpu::Cpu::INC, NesCpu::Cpu::UNK, NesCpu::Cpu::
+    BEQ, NesCpu::Cpu::SBC, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::SBC, NesCpu::Cpu::INC, NesCpu::Cpu::UNK, NesCpu::Cpu::SED, NesCpu::Cpu::SBC, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::UNK, NesCpu::Cpu::SBC, NesCpu::Cpu::INC, NesCpu::Cpu::UNK};
 
