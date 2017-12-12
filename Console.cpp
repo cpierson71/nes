@@ -10,5 +10,9 @@ void Console::initialize()
     mapper.initialize(*cartridgeData, memory);
     cpu.reset(memory);
 
+
+    cpu.setupOpcodes();
+    cpu.opcodeInfoArray[0].operation(cpu,memory,0);
+
     std::cout << "end\n";
 }
